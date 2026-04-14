@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pebbles Cafe</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family:'Poppins',sans-serif;
+  background:linear-gradient(135deg,#2c1810,#6f4e37);
+  color:#333;
+}
+
+/* HEADER */
+header {
+  padding:20px;
+  text-align:center;
+  color:white;
+}
+header h1 {
+  font-size:28px;
+}
+header p {
+  opacity:0.8;
+}
+
+/* FILTERS */
+.filters {
+  display:flex;
+  overflow-x:auto;
+  gap:10px;
+  padding:10px;
+}
+.filters button {
+  border:none;
+  padding:8px 15px;
+  border-radius:20px;
+  background:rgba(255,255,255,0.2);
+  color:white;
+  backdrop-filter:blur(10px);
+  cursor:pointer;
+}
+.filters button:hover {
+  background:white;
+  color:#333;
+}
+
+/* GRID */
+.grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(170px,1fr));
+  gap:15px;
+  padding:15px;
+}
+
+/* CARD */
+.card {
+  background:rgba(255,255,255,0.15);
+  backdrop-filter:blur(15px);
+  border-radius:15px;
+  padding:10px;
+  color:white;
+  transition:0.3s;
+}
+.card:hover {
+  transform:translateY(-5px) scale(1.02);
+}
+.card img {
+  width:100%;
+  border-radius:10px;
+}
+.card h4 {
+  margin:5px 0;
+}
+.card p {
+  font-size:13px;
+  opacity:0.8;
+}
+.card button {
+  margin-top:5px;
+  width:100%;
+  padding:8px;
+  border:none;
+  border-radius:8px;
+  background:#ffb347;
+  color:black;
+  font-weight:600;
+  cursor:pointer;
+}
+
+/* CART BUTTON */
+.cart-btn {
+  position:fixed;
+  bottom:20px;
+  right:20px;
+  background:#ffb347;
+  color:black;
+  padding:15px;
+  border-radius:50%;
+  font-size:18px;
+  box-shadow:0 4px 15px rgba(0,0,0,0.3);
+  cursor:pointer;
+}
+
+/* CART PANEL */
+.cart {
+  position:fixed;
+  bottom:0;
+  left:0;
+  right:0;
+  background:white;
+  max-height:85%;
+  overflow:auto;
+  display:none;
+  padding:15px;
+  border-radius:20px 20px 0 0;
+  animation:slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from { transform:translateY(100%); }
+  to { transform:translateY(0); }
+}
+
+.cart-item {
+  display:flex;
+  justify-content:space-between;
+  margin:10px 0;
+}
+
+/* FORM */
+input, textarea {
+  width:100%;
+  padding:10px;
+  margin:6px 0;
+  border-radius:8px;
+  border:1px solid #ccc;
+}
+
+.checkout {
+  width:100%;
+  padding:12px;
+  background:#6f4e37;
+  color:white;
+  border:none;
+  border-radius:10px;
+  font-size:16px;
+}
+
+/* WHATSAPP */
+.whatsapp {
+  position:fixed;
+  bottom:20px;
+  left:20px;
+  background:#25D366;
+  color:white;
+  padding:14px;
+  border-radius:50%;
+  text-decoration:none;
+  font-size:18px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>Pebbles Cafe ☕</h1>
+<p>Chill • Sip • Repeat</p>
+</header>
+
+<div class="filters" id="filters"></div>
+<div class="grid" id="products"></div>
+
+<div class="cart-btn" onclick="toggleCart()">🛒 <span id="count">0</span></div>
+
+<div class="cart" id="cart"></div>
+
+<a class="whatsapp" href="https://wa.me/917410767487" target="_blank">💬</a>
+
+<script>
+const products = [
+{ id:1, name:"Cold Coffee", price:120, cat:"Beverages", img:"https://i.ibb.co/7QpKsCX/coffee.jpg" },
+{ id:2, name:"Cappuccino", price:150, cat:"Coffee", img:"https://i.ibb.co/Wf3GqkR/cappuccino.jpg" },
+{ id:3, name:"Veg Sandwich", price:100, cat:"Snacks", img:"https://i.ibb.co/jfR1pYH/sandwich.jpg" },
+{ id:4, name:"French Fries", price:90, cat:"Snacks", img:"https://i.ibb.co/5R9j8nP/fries.jpg" },
+{ id:5, name:"Chocolate Shake", price:160, cat:"Beverages", img:"https://i.ibb.co/Gx8Wz0b/shake.jpg" },
+{ id:6, name:"Pizza Slice", price:180, cat:"Snacks", img:"https://i.ibb.co/vdY0k2P/pizza.jpg" },
+{ id:7, name:"Brownie", price:80, cat:"Desserts", img:"https://i.ibb.co/Y7w6X1t/brownie.jpg" },
+{ id:8, name:"Pasta", price:200, cat:"Snacks", img:"https://i.ibb.co/4g7rQY9/pasta.jpg" }
+];
+
+let cart = JSON.parse(localStorage.getItem("cart")) || {};
+
+function renderProducts(filter="All"){
+  let grid=document.getElementById("products");
+  grid.innerHTML="";
+  products.filter(p=>filter==="All"||p.cat===filter)
+  .forEach(p=>{
+    grid.innerHTML+=`
+    <div class="card">
+      <img src="${p.img}" loading="lazy">
+      <h4>${p.name}</h4>
+      <p>₹${p.price}</p>
+      <button onclick="addToCart(${p.id})">Add to Cart</button>
+    </div>`;
+  });
+}
+
+function renderFilters(){
+  let cats=["All",...new Set(products.map(p=>p.cat))];
+  let f=document.getElementById("filters");
+  cats.forEach(c=>{
+    f.innerHTML+=`<button onclick="renderProducts('${c}')">${c}</button>`;
+  });
+}
+
+function addToCart(id){
+  cart[id]=(cart[id]||0)+1;
+  updateCart();
+}
+
+function updateCart(){
+  localStorage.setItem("cart",JSON.stringify(cart));
+  document.getElementById("count").innerText=
+    Object.values(cart).reduce((a,b)=>a+b,0);
+}
+
+function toggleCart(){
+  let c=document.getElementById("cart");
+  c.style.display=c.style.display==="block"?"none":"block";
+  renderCart();
+}
+
+function renderCart(){
+  let c=document.getElementById("cart");
+  let total=0;
+  c.innerHTML="<h3>Your Order</h3>";
+
+  for(let id in cart){
+    let p=products.find(x=>x.id==id);
+    let qty=cart[id];
+    let sub=qty*p.price;
+    total+=sub;
+
+    c.innerHTML+=`
+    <div class="cart-item">
+      ${p.name} x${qty} = ₹${sub}
+      <div>
+        <button onclick="changeQty(${id},1)">+</button>
+        <button onclick="changeQty(${id},-1)">-</button>
+      </div>
+    </div>`;
+  }
+
+  c.innerHTML+=`<h3>Total: ₹${total}</h3>`;
+
+  c.innerHTML+=`
+  <form action="https://formspree.io/f/YOUR_FORM_ID" method="POST" onsubmit="prepareOrder()">
+    <input required name="name" placeholder="Your Name">
+    <input required name="phone" placeholder="Phone Number">
+    <textarea required name="address" placeholder="Delivery Address"></textarea>
+    <textarea name="notes" placeholder="Special Instructions"></textarea>
+    <input type="hidden" name="order" id="orderData">
+    <button class="checkout">Place Order</button>
+  </form>`;
+}
+
+function changeQty(id,val){
+  cart[id]+=val;
+  if(cart[id]<=0) delete cart[id];
+  updateCart();
+  renderCart();
+}
+
+function prepareOrder(){
+  let text="";
+  let total=0;
+
+  for(let id in cart){
+    let p=products.find(x=>x.id==id);
+    let qty=cart[id];
+    let sub=qty*p.price;
+    total+=sub;
+    text+=`${p.name} x${qty} = ₹${sub}\n`;
+  }
+
+  text+=`Total: ₹${total}`;
+  document.getElementById("orderData").value=text;
+
+  localStorage.removeItem("cart");
+  alert("Order placed! Pebbles Cafe will contact you on WhatsApp ☕");
+}
+
+renderFilters();
+renderProducts();
+updateCart();
+</script>
+
+</body>
+</html>
